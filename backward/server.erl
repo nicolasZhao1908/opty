@@ -13,6 +13,7 @@ server(Validator, Store) ->
     receive 
         {open, Client} ->
             %% TODO: ADD SOME CODE
+            
             server(Validator, Store);
         stop ->
             Validator ! stop,
