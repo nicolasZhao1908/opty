@@ -10,6 +10,8 @@ init()->
 validator() ->
     receive
         {validate, Ref, Reads, Writes, Client} ->
+            % There is only one client in write phase at the same time
+            % critical section
             Tag = make_ref(),
             send_read_checks(Reads, Tag),  % COMPLETED
             case check_reads(length(Reads), Tag) of  % COMPLETED

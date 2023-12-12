@@ -16,7 +16,7 @@ entry(Value, Time) ->
             entry(New , make_ref());  % COMPLETED
         {check, Ref, Readtime, From} ->
             if 
-                 Readtime == Time ->   % COMPLETED
+                Readtime == Time ->   % COMPLETED
                     %% ADDED
                     From ! {Ref, ok};
                 true ->

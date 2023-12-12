@@ -12,7 +12,7 @@ handler(Client, Validator, Store, Reads, Writes) ->
         {read, Ref, N} ->
             case lists:keyfind(N, 1, Writes) of  % COMPLETED
                 {N, _, Value} ->
-                    Client ! {value, Ref, Value}, % ADDED self()?
+                    Client ! {value, Ref, Value}, % ADDED 
                     handler(Client, Validator, Store, Reads, Writes);
                 false ->
                     Entry = store:lookup(N,Store), % ADDED
@@ -21,6 +21,7 @@ handler(Client, Validator, Store, Reads, Writes) ->
             end;
         {Ref, Entry, Value, Time} ->
             Client ! {value, Ref, Value}, % ADDED
+            % Remember that the timestamp is assigned at the END of read phase
             handler(Client, Validator, Store, [{Entry, Time}|Reads], Writes); % COMPLETED
         {write, N, Value} ->
             Entry = store:lookup(N, Store),  % ADDED
