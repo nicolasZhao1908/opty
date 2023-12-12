@@ -1,3 +1,4 @@
+**/.python-version
 .eunit
 *.o
 *.beam
@@ -5,6 +6,7 @@
 erl_crash.dump
 .concrete/DEV_MODE
 
+**/experiments
 # rebar 2.x
 .rebar
 rel/example_project
