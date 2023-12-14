@@ -10,30 +10,25 @@ init(Client, Validator, Store) ->
 handler(Client, Validator, Store, Reads, Writes) ->         
     receive
         {read, Ref, N} ->
-            case lists:keyfind(N, 1, Writes) of  %% TODO: COMPLETE
+            case lists:keyfind(N, 1, Writes) of  % COMPLETED
                 {N, _, Value} ->
-                    %% TODO: ADD SOME CODE
-                    Client ! {value, Ref, Value},
+                    Client ! {value, Ref, Value}, % ADDED 
                     handler(Client, Validator, Store, Reads, Writes);
                 false ->
-                    %% TODO: ADD SOME CODE
-                    Entry = store:lookup(N, Store),
-                    Entry ! {read, Ref, self()},
+                    Entry = store:lookup(N,Store), % ADDED
+                    Entry ! {read, Ref, self()}, % ADDED
                     handler(Client, Validator, Store, Reads, Writes)
             end;
         {Ref, Entry, Value, Time} ->
-            %% TODO: ADD SOME CODE HERE AND COMPLETE NEXT LINE
-            Client ! {value, Ref, Value},
-            handler(Client, Validator, Store, [{Entry, Time}|Reads], Writes);
+            Client ! {value, Ref, Value}, % ADDED
+            % Remember that the timestamp is assigned at the END of read phase
+            handler(Client, Validator, Store, [{Entry, Time}|Reads], Writes); % COMPLETED
         {write, N, Value} ->
-            %% TODO: ADD SOME CODE HERE AND COMPLETE NEXT LINE
-            Entry = store:lookup(N, Store),
-            Added = lists:keystore(N, 1, Writes, {N, Entry, Value}),
+            Entry = store:lookup(N, Store),  % ADDED
+            Added = lists:keystore(N, 1, Writes, {N, Entry, Value}), % COMPLETED
             handler(Client, Validator, Store, Reads, Added);
         {commit, Ref} ->
-            %% TODO: ADD SOME CODE
-            Validator ! {Ref, Reads, Writes, Client},
-            handler(Client, Validator, Store, [], []);
+            Validator ! {validate, Ref, Reads, Writes, Client}; % ADDED
         abort ->
             ok
     end.

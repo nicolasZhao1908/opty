@@ -10,15 +10,16 @@ init()->
 validator() ->
     receive
         {validate, Ref, Reads, Writes, Client} ->
+            % There is only one client in write phase at the same time
+            % critical section
             Tag = make_ref(),
-            send_read_checks(Reads, Tag),  %% TODO: COMPLETE
-            case check_reads(length(Reads), Tag) of  %% TODO: COMPLETE
+            send_read_checks(Reads, Tag),  % COMPLETED
+            case check_reads(length(Reads), Tag) of  % COMPLETED
                 ok ->
-                    update(Writes),  %% TODO: COMPLETE
+                    update(Writes),  % COMPLETED
                     Client ! {Ref, ok};
                 abort ->
-                    %% TODO: ADD SOME CODE
-                    ok
+                    Client ! {Ref, abort} % ADDED
             end,
             validator();
         stop ->
@@ -29,16 +30,14 @@ validator() ->
     
 update(Writes) ->
     lists:foreach(fun({_, Entry, Value}) -> 
-                  %% TODO: ADD SOME CODE
-                  Entry ! {write, Value}
+                    Entry ! {write, Value} % ADDED
                   end, 
                   Writes).
 
 send_read_checks(Reads, Tag) ->
     Self = self(),
     lists:foreach(fun({Entry, Time}) -> 
-                  %% TODO: ADD SOME CODE
-                  Entry ! {check, Tag, Time, Self}
+                    Entry ! {check, Tag, Time, Self } % ADDED
                   end, 
                   Reads).
 
