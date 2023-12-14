@@ -1,16 +1,16 @@
 -module(client).
 -export([start/5]).
 
+% Entries is a integer in the original version
+% In the experiment vi) Entries becomes a list of entries assigned to
+% each client
 start(ClientID, Entries, Reads, Writes, Server) ->
     spawn(fun() -> open(ClientID, Entries, Reads, Writes, Server, 0, 0) end).
 
-get_entries_subset(Entries, NumClients) ->
-    % seq is inclusive
-    Aux = [{rand:uniform(), E} || E <- lists:seq(1, Entries)],
-    % sort is from ascending
-    lists:sublist(
-        [X || {_, X} <- lists:sort(Aux)], NumClients
-    ).
+% Function for getting a random element from a list
+% USED for experiment vi)
+get_random_elem_from_list(List) ->
+    lists:nth(rand:uniform(length(List)), List).
 
 open(ClientID, Entries, Reads, Writes, Server, Total, Ok) ->
     Server ! {open, self()},
@@ -53,14 +53,20 @@ do_transaction(ClientID, Entries, Reads, Writes, Handler) ->
 
 do_read(Entries, Handler) ->
     Ref = make_ref(),
-    Num = rand:uniform(Entries),
+    %Num = rand:uniform(Entries),
+
+    % ADDED for experiment vi)
+    Num = get_random_elem_from_list(Entries),
     Handler ! {read, Ref, Num},
     receive
         {value, Ref, Value} -> Value
     end.
 
 do_write(Entries, Handler, Value) ->
-    Num = rand:uniform(Entries),
+    %Num = rand:uniform(Entries),
+
+    % ADDED for experiment vi)
+    Num = get_random_elem_from_list(Entries),
     Handler ! {write, Num, Value}.
 
 do_commit(Handler) ->

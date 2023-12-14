@@ -15,31 +15,25 @@ def parse(text):
     return (total_transactions_matches, percentage_matches)
 
 
-def measure_clients():
+def measure():
     subprocess.run(["erl", "-make"], check=False)
     iterations = 5
     num_entries = 5
     rxt = 1
-    wxt = 1
+    wxt = range(1, 16)
     duration = 10
-    num_clients = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]  # add values
-    output_dir = "experiments/clients"
+    num_clients = 4
+    output_dir = "experiments/wxt"
     timeout = duration + 5
     os.makedirs(output_dir, exist_ok=True)
     with open(f"{output_dir}/summary.csv", "w", encoding="utf-8") as summary_file:
         summary_file.write("clients,entries,rxt,wxt,duration,transactions,ok\n")
-        for c in num_clients:
+        for c in wxt:
             for it in range(iterations):
-                envs = os.environ.copy()
-                envs["CLIENT"] = str(c)
-                envs["ENTRIES"] = str(num_entries)
-                envs["RXT"] = str(rxt)
-                envs["WXT"] = str(wxt)
-                envs["DURATION"] = str(duration)
                 print(
-                    f"Interation {it}: {c} clients, {num_entries} entries, {rxt} rxt, {wxt} wxt, {duration} duration"
+                    f"Interation {it}: {num_clients} clients, {num_entries} entries, {rxt} rxt, {c} wxt, {duration} duration"
                 )
-                filename = f"{c}clients_{num_entries}entries_{rxt}rxt_{wxt}wxt_{duration}duration.{it}.out"
+                filename = f"{num_clients}clients_{num_entries}entries_{rxt}rxt_{c}wxt_{duration}duration.{it}.out"
                 with open(
                     f"{output_dir}/{filename}", "a+", encoding="utf-8"
                 ) as outfile:
@@ -51,10 +45,9 @@ def measure_clients():
                                 "-pa",
                                 "ebin",
                                 "-eval",
-                                f"opty:start({c},{num_entries},{rxt},{wxt},{duration})",
+                                f"opty:start({num_clients},{num_entries},{rxt},{c},{duration})",
                             ],
                             check=False,
-                            env=envs,
                             timeout=timeout,
                             stdout=outfile,
                         )
@@ -63,7 +56,56 @@ def measure_clients():
                         (trs, oks) = parse(outfile.read())
                         for tr, ok in zip(trs, oks):
                             summary_file.write(
-                                f"{c},{num_entries},{rxt},{wxt},{duration},{tr},{ok}\n"
+                                f"{num_clients},{num_entries},{rxt},{c},{duration},{tr},{ok}\n"
+                            )
+                    summary_file.flush()
+
+
+def measure_exp6():
+    subprocess.run(["erl", "-make"], check=False)
+    iterations = 5
+    num_entries = 10
+    rxt = 1
+    wxt = 1
+    duration = 10
+    num_clients = 4
+    subset_size = range(1, num_entries + 1)
+    output_dir = "experiments/subset"
+    timeout = duration + 5
+    os.makedirs(output_dir, exist_ok=True)
+    with open(f"{output_dir}/summary.csv", "w", encoding="utf-8") as summary_file:
+        summary_file.write(
+            "clients,entries,rxt,wxt,duration,subset_size,transactions,ok\n"
+        )
+        for c in subset_size:
+            for it in range(iterations):
+                print(
+                    f"Iteration {it}: {num_clients} clients, {num_entries} entries, {rxt} rxt, {wxt} wxt, {duration} duration, {c} subset_size"
+                )
+                filename = f"{num_clients}clients_{num_entries}entries_{rxt}rxt_{c}wxt_{duration}duration_{c}subset_size.{it}.out"
+                with open(
+                    f"{output_dir}/{filename}", "a+", encoding="utf-8"
+                ) as outfile:
+                    try:
+                        subprocess.run(
+                            [
+                                "erl",
+                                "-noshell",
+                                "-pa",
+                                "ebin",
+                                "-eval",
+                                f"opty:start({num_clients},{num_entries},{rxt},{wxt},{duration},{c})",
+                            ],
+                            check=False,
+                            timeout=timeout,
+                            stdout=outfile,
+                        )
+                    except subprocess.TimeoutExpired:
+                        outfile.seek(0)
+                        (trs, oks) = parse(outfile.read())
+                        for tr, ok in zip(trs, oks):
+                            summary_file.write(
+                                f"{num_clients},{num_entries},{rxt},{wxt},{duration},{c},{tr},{ok}\n"
                             )
                     summary_file.flush()
 
@@ -84,10 +126,9 @@ def print_avg(filepath, columns):
 
 
 def main():
-    # measure_clients()
-    experiment = "clients"
-    filepath = f"experiments/{experiment}/summary.csv"
-    print_avg(filepath, [experiment])
+    #measure_exp6()
+    filepath = "experiments/subset/summary.csv"
+    print_avg(filepath, ["subset_size"])
 
 
 if __name__ == "__main__":
