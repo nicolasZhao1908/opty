@@ -10,17 +10,19 @@ init() ->
 validator() ->
     receive
         {validate, Ref, Reads, Writes, Client, Handler} ->
+            block(Writes, Handler),
             Tag = make_ref(),
             send_write_checks(Writes, Tag, Handler),
             case check_writes(length(Writes), Tag) of
                 ok ->
                     update(Writes),
-                    clean_active_transactions(Reads, Handler),
+                    clean_reads(Reads, Handler),
                     Client ! {Ref, ok};
                 abort ->
-                    clean_active_transactions(Reads, Handler),
+                    clean_reads(Reads, Handler),
                     Client ! {Ref, abort}
             end,
+            unblock(Writes, Handler),
             validator();
         stop ->
             ok;
@@ -28,12 +30,28 @@ validator() ->
             validator()
     end.
 
-clean_active_transactions(Reads, Handler) ->
+clean_reads(Reads, Handler) ->
     lists:foreach(
         fun(Entry) ->
             Entry ! {clean, Handler}
         end,
         Reads
+    ).
+
+block(Writes, Handler) ->
+    lists:foreach(
+        fun({_, Entry, _}) ->
+            Entry ! {block, Handler}
+        end,
+        Writes
+    ).
+
+unblock(Writes, Handler) ->
+    lists:foreach(
+        fun({_, Entry, _}) ->
+            Entry ! {unblock, Handler}
+        end,
+        Writes
     ).
 
 update(Writes) ->

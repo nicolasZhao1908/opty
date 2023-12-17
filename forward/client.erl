@@ -23,18 +23,18 @@ open(ClientID, Entries, Reads, Writes, Server, Total, Ok) ->
     end.
 
 do_transaction(_, _, 0, 0, Handler) ->
-    io:format("Writes: ~p Reads: ~p~n",[0,0]),
+    %io:format("Writes: ~p Reads: ~p~n",[0,0]),
     do_commit(Handler);
 do_transaction(ClientID, Entries, 0, Writes, Handler) ->
-    io:format("Writes: ~p Reads: ~p~n",[Writes,0]),
+    %io:format("Writes: ~p Reads: ~p~n",[Writes,0]),
     do_write(Entries, Handler, ClientID),
     do_transaction(ClientID, Entries, 0, Writes-1, Handler);
 do_transaction(ClientID, Entries, Reads, 0, Handler) ->
-    io:format("Writes: ~p Reads: ~p~n",[0,Reads]),
+    %io:format("Writes: ~p Reads: ~p~n",[0,Reads]),
     do_read(Entries, Handler),
     do_transaction(ClientID, Entries, Reads-1, 0, Handler);
 do_transaction(ClientID, Entries, Reads, Writes, Handler) ->
-    io:format("Writes: ~p Reads: ~p~n",[Writes,Reads]),
+    %io:format("Writes: ~p Reads: ~p~n",[Writes,Reads]),
     Op = rand:uniform(),
     if Op >= 0.5 ->
          do_read(Entries, Handler),
