@@ -5,6 +5,7 @@ start(N) ->
     spawn(fun() -> init(N) end).
 
 init(N) ->
+    io:format("Server: started in node ~w ~n", [node()]),
     Store = store:new(N),
     Validator = validator:start(),
     server(Validator, Store).
