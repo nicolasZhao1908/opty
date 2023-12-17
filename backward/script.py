@@ -3,7 +3,6 @@ import subprocess
 import os
 import pandas as pd
 
-
 def convert_to_list(value):
     if isinstance(value, range):
         # If the input is a range, convert it to a list
@@ -137,12 +136,13 @@ def print_stddev(filepath, columns):
 
 
 def main():
-    experiment = ["clients"]
+    experiment = ["subset5"]
     filepath = f"experiments/{experiment[0]}/summary.csv"
 
     # usage iterations, clients, entries, read, write, duration,subset, experiment
     #measure_experiment(2, 2, 5, 6, 4, 10, 1, experiment)
-    print_stddev(filepath, experiment)
+    #print_avg(filepath, experiment)
+    print_stddev(filepath, ["subset_size"])
 
 
 if __name__ == "__main__":
