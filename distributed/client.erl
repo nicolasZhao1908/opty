@@ -2,6 +2,7 @@
 -export([start/5]).
 
 start(ClientID, Entries, Reads, Writes, Server) ->
+    io:format("Client ~w started in node ~w ~n", [ClientID, node()]),
     spawn(fun() -> open(ClientID, Entries, Reads, Writes, Server, 0, 0) end).
 
 get_entries_subset(Entries, NumClients) ->

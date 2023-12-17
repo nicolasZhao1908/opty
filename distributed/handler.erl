@@ -28,7 +28,6 @@ handler(Client, Validator, Store, Reads, Writes) ->
             Added = lists:keystore(N, 1, Writes, {N, Entry, Value}), % COMPLETED
             handler(Client, Validator, Store, Reads, Added);
         {commit, Ref} ->
-            io:format("Handler in node ~w: Client: ~w asks for commiting~n", [node(),Client]),
             Validator ! {validate, Ref, Reads, Writes, Client}; % ADDED
         abort ->
             ok
