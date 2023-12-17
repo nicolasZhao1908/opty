@@ -7,28 +7,27 @@ start(Client, Validator, Store) ->
 init(Client, Validator, Store) ->
     handler(Client, Validator, Store, [], []).
 
-handler(Client, Validator, Store, Reads, Writes) ->         
+handler(Client, Validator, Store, Reads, Writes) ->
     receive
         {read, Ref, N} ->
-            case lists:keyfind(N, 1, Writes) of  % COMPLETED
+            case lists:keyfind(N, 1, Writes) of
                 {N, _, Value} ->
-                    Client ! {value, Ref, Value}, % ADDED 
+                    Client ! {value, Ref, Value},
                     handler(Client, Validator, Store, Reads, Writes);
                 false ->
-                    Entry = store:lookup(N,Store), % ADDED
-                    Entry ! {read, Ref, self()}, % ADDED
+                    Entry = store:lookup(N, Store),
+                    Entry ! {read, Ref, self()},
                     handler(Client, Validator, Store, Reads, Writes)
             end;
-        {Ref, Entry, Value, Time} ->
-            Client ! {value, Ref, Value}, % ADDED
-            % Remember that the timestamp is assigned at the END of read phase
-            handler(Client, Validator, Store, [{Entry, Time}|Reads], Writes); % COMPLETED
         {write, N, Value} ->
-            Entry = store:lookup(N, Store),  % ADDED
-            Added = lists:keystore(N, 1, Writes, {N, Entry, Value}), % COMPLETED
+            Entry = store:lookup(N, Store),
+            Added = lists:keystore(N, 1, Writes, {N, Entry, Value}),
             handler(Client, Validator, Store, Reads, Added);
+        {Ref, Entry, Value} ->
+            Client ! {value, Ref, Value},
+            handler(Client, Validator, Store, [Entry | Reads], Writes);
         {commit, Ref} ->
-            Validator ! {validate, Ref, Reads, Writes, Client}; % ADDED
+            Validator ! {validate, Ref, Reads, Writes, Client, self()};
         abort ->
             ok
     end.

@@ -4,22 +4,22 @@
 start() ->
     spawn_link(fun() -> init() end).
 
-init()->
+init() ->
     validator().
 
 validator() ->
     receive
-        {validate, Ref, Reads, Writes, Client} ->
-            % There is only one client in write phase at the same time
-            % critical section
+        {validate, Ref, Reads, Writes, Client, Handler} ->
             Tag = make_ref(),
-            send_read_checks(Reads, Tag),  % COMPLETED
-            case check_reads(length(Reads), Tag) of  % COMPLETED
+            send_write_checks(Writes, Tag, Handler),
+            case check_writes(length(Writes), Tag) of
                 ok ->
-                    update(Writes),  % COMPLETED
+                    update(Writes),
+                    clean_active_transactions(Reads, Handler),
                     Client ! {Ref, ok};
                 abort ->
-                    Client ! {Ref, abort} % ADDED
+                    clean_active_transactions(Reads, Handler),
+                    Client ! {Ref, abort}
             end,
             validator();
         stop ->
@@ -27,26 +27,38 @@ validator() ->
         _Old ->
             validator()
     end.
-    
+
+clean_active_transactions(Reads, Handler) ->
+    lists:foreach(
+        fun(Entry) ->
+            Entry ! {clean, Handler}
+        end,
+        Reads
+    ).
+
 update(Writes) ->
-    lists:foreach(fun({_, Entry, Value}) -> 
-                    Entry ! {write, Value} % ADDED
-                  end, 
-                  Writes).
+    lists:foreach(
+        fun({_, Entry, Value}) ->
+            Entry ! {write, Value}
+        end,
+        Writes
+    ).
 
-send_read_checks(Reads, Tag) ->
+send_write_checks(Writes, Tag, Handler) ->
     Self = self(),
-    lists:foreach(fun({Entry, Time}) -> 
-                    Entry ! {check, Tag, Time, Self } % ADDED
-                  end, 
-                  Reads).
+    lists:foreach(
+        fun({_, Entry, _}) ->
+            Entry ! {check, Tag, Self, Handler}
+        end,
+        Writes
+    ).
 
-check_reads(0, _) ->
+check_writes(0, _) ->
     ok;
-check_reads(N, Tag) ->
+check_writes(N, Tag) ->
     receive
         {Tag, ok} ->
-            check_reads(N-1, Tag);
+            check_writes(N - 1, Tag);
         {Tag, abort} ->
             abort
     end.
