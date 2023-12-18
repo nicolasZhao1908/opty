@@ -130,7 +130,7 @@ def print_stddev(filepath, columns):
     oks = df.groupby(columns)[["ok"]].std()
     print(oks)
     oks_res = list(oks.itertuples(index=True, name=None))
-    print("##### Ok (%) #####")
+    print("##### Stddev Ok (%) #####")
     for ok in oks_res:
         print(f"({ok[0]}, {ok[1]})")
 
