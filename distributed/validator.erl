@@ -5,6 +5,7 @@ start() ->
     spawn_link(fun() -> init() end).
 
 init()->
+    io:format("Validator started in node ~w ~n", [node()]),
     validator().
 
 validator() ->
